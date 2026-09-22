@@ -80,18 +80,39 @@ td:last-child,th:last-child{{text-align:right;font-variant-numeric:tabular-nums}
 
 
 def send_email(subject: str, html: str, text: str) -> None:
-    if not (config.SMTP_USER and config.SMTP_PASS and config.MAIL_TO):
-        raise RuntimeError("SMTP_USER, SMTP_PASS and MAIL_TO must be set to email the report.")
-    msg = EmailMessage()
-    msg["Subject"] = subject
-    msg["From"] = config.SMTP_USER
-    msg["To"] = config.MAIL_TO
-    msg.set_content(text)
-    msg.add_alternative(html, subtype="html")
-    with smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT) as s:
-        s.starttls()
-        s.login(config.SMTP_USER, config.SMTP_PASS)
-        s.send_message(msg)
+    if not config.MAIL_TO:
+        raise RuntimeError("MAIL_TO must be set to email the report.")
+    if config.SMTP_USER and config.SMTP_PASS:
+        msg = EmailMessage()
+        msg["Subject"] = subject
+        msg["From"] = config.SMTP_USER
+        msg["To"] = config.MAIL_TO
+        msg.set_content(text)
+        msg.add_alternative(html, subtype="html")
+        with smtplib.SMTP(config.SMTP_HOST, config.SMTP_PORT) as s:
+            s.starttls()
+            s.login(config.SMTP_USER, config.SMTP_PASS)
+            s.send_message(msg)
+        return
+    # No SMTP creds: use the exe.dev email gateway (available on exe.dev VMs).
+    # Plain-text body with the full HTML report attached.
+    import base64
+
+    import requests
+
+    resp = requests.post(
+        "http://169.254.169.254/gateway/email/send",
+        json={"to": config.MAIL_TO, "subject": subject, "body": text,
+              "attachments": [{"filename": "finsum-report.html",
+                               "content": base64.b64encode(html.encode()).decode(),
+                               "content_type": "text/html"}]},
+        timeout=30)
+    try:
+        data = resp.json()
+    except ValueError:
+        data = {"error": resp.text[:200]}
+    if not data.get("success"):
+        raise RuntimeError(f"exe.dev email gateway rejected the send: {data}")
 
 
 def save_report(conn, summary: dict, memo_md: str) -> None:
