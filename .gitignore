@@ -4,3 +4,4 @@ out/
 accounts.yaml
 __pycache__/
 *.egg-info/
+.venv/
