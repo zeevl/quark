@@ -1,0 +1,6 @@
+.env
+finsum.db
+out/
+accounts.yaml
+__pycache__/
+*.egg-info/

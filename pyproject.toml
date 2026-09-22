@@ -1,0 +1,22 @@
+[project]
+name = "finsum"
+version = "0.1.0"
+description = "Weekly cross-account finance summary: SimpleFIN -> SQLite -> Claude categorization -> anomaly rules -> Monday memo"
+requires-python = ">=3.11"
+dependencies = [
+    "anthropic>=0.40",
+    "requests>=2.31",
+    "pyyaml>=6.0",
+    "markdown>=3.5",
+    "python-dotenv>=1.0",
+]
+
+[project.scripts]
+finsum = "finsum.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["finsum*"]

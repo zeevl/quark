@@ -1,0 +1,38 @@
+# Runs every Monday 6am Pacific. State (finsum.db, accounts.yaml) is persisted via cache.
+# For a self-hosted box, skip this and use the crontab line in the README instead.
+name: weekly-finance-summary
+on:
+  schedule:
+    - cron: "0 13 * * 1"
+  workflow_dispatch:
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Restore state
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            finsum.db
+            accounts.yaml
+          key: finsum-state-${{ github.run_id }}
+          restore-keys: finsum-state-
+      - run: pip install -e .
+      - run: finsum run --email --quiet
+        env:
+          SIMPLEFIN_ACCESS_URL: ${{ secrets.SIMPLEFIN_ACCESS_URL }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          MAIL_TO: ${{ secrets.MAIL_TO }}
+      - name: Save state
+        uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: |
+            finsum.db
+            accounts.yaml
+          key: finsum-state-${{ github.run_id }}
