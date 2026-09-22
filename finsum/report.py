@@ -49,10 +49,13 @@ def write_memo(summary: dict, model: str | None = None) -> str:
     slim["notable_transactions"] = [t for t in summary["transactions"]
                                     if not t["transfer"] and abs(t["amount"]) >= 10][:150]
     msg = client.messages.create(
-        model=model, max_tokens=2500, system=MEMO_SYSTEM,
+        model=model, max_tokens=16000, system=MEMO_SYSTEM,  # headroom: thinking tokens count against this
         messages=[{"role": "user", "content": json.dumps(slim, default=str)}],
     )
-    return "".join(b.text for b in msg.content if getattr(b, "type", "") == "text").strip()
+    text = "".join(b.text for b in msg.content if getattr(b, "type", "") == "text").strip()
+    if not text:
+        raise RuntimeError(f"memo model returned no text (stop_reason={msg.stop_reason}, usage={msg.usage})")
+    return text
 
 
 def transactions_table(summary: dict) -> str:
