@@ -93,6 +93,7 @@ def cmd_report(args) -> None:
     html_path = config.OUT_DIR / f"{summary['week_end']}.html"
     md_path.write_text(memo + "\n\n---\n\n" + report.transactions_table(summary))
     html_path.write_text(html)
+    report.write_index(config.OUT_DIR)
     print(f"wrote {md_path} and {html_path}")
     if args.email:
         report.send_email(f"Weekly finances — week ending {summary['week_end']}", html, memo)
