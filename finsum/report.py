@@ -118,17 +118,6 @@ def send_email(subject: str, html: str, text: str) -> None:
         raise RuntimeError(f"exe.dev email gateway rejected the send: {data}")
 
 
-def write_index(out_dir) -> None:
-    """Static index.html linking every report, newest first (for the httpd serving out/)."""
-    reports = sorted(out_dir.glob("2*.html"), reverse=True)
-    items = "\n".join(f'<li><a href="{p.name}">Week ending {p.stem}</a></li>' for p in reports)
-    (out_dir / "index.html").write_text(
-        '<!doctype html><html><head><meta charset="utf-8"><title>finsum reports</title>'
-        '<style>body{font:15px/1.6 -apple-system,Segoe UI,Helvetica,Arial,sans-serif;max-width:760px;'
-        'margin:24px auto;padding:0 16px;color:#222}</style></head>'
-        f'<body><h1>finsum reports</h1><ul>{items}</ul></body></html>')
-
-
 def save_report(conn, summary: dict, memo_md: str) -> None:
     conn.execute(
         "INSERT OR REPLACE INTO reports(week_ending, generated_at, markdown, summary_json) VALUES (?,?,?,?)",

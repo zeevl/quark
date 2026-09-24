@@ -9,6 +9,8 @@ memo → email.
 - `finsum/categorize.py` — batch classification of new merchant keys into `config.CATEGORIES`
 - `finsum/rules.py` — `link_transfers()` and `analyze()`; all flags are produced here, no LLM
 - `finsum/report.py` — memo prompt, HTML render, SMTP
+- `finsum/web.py` — dark dashboard at `out/index.html` (always the latest report from the DB);
+  `finsum web` regenerates it. Dated `out/<date>.html` files stay plain for email.
 - `finsum/cli.py` — commands; `finsum run` is the cron entry point
 - `accounts.yaml` — the ONE piece of human config: account id → entity. Auto-stubbed on first sync.
 

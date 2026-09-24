@@ -7,6 +7,7 @@
   finsum report [--email]        analyze the last 7 days and write out/<date>.{md,html}
   finsum run [--email]           sync + categorize + report — what the cron job calls
   finsum accounts                list known accounts and their entity assignment
+  finsum web                   regenerate out/index.html (dark dashboard) from the latest report in the DB
 """
 from __future__ import annotations
 
@@ -15,7 +16,7 @@ import sys
 import time
 from datetime import datetime, timedelta
 
-from . import categorize, config, db, report, rules, simplefin
+from . import categorize, config, db, report, rules, simplefin, web
 
 
 def _access_url() -> str:
@@ -93,13 +94,18 @@ def cmd_report(args) -> None:
     html_path = config.OUT_DIR / f"{summary['week_end']}.html"
     md_path.write_text(memo + "\n\n---\n\n" + report.transactions_table(summary))
     html_path.write_text(html)
-    report.write_index(config.OUT_DIR)
+    web.write_dashboard(config.OUT_DIR)
     print(f"wrote {md_path} and {html_path}")
     if args.email:
         report.send_email(f"Weekly finances — week ending {summary['week_end']}", html, memo)
         print(f"emailed to {config.MAIL_TO}")
     elif not args.quiet:
         print("\n" + memo)
+
+
+def cmd_web(args) -> None:
+    index = web.write_dashboard()
+    print(f"wrote {index}")
 
 
 def cmd_run(args) -> None:
@@ -119,6 +125,7 @@ def main(argv=None) -> None:
     s = sub.add_parser("backfill"); s.add_argument("--days", type=int, default=365); s.set_defaults(fn=cmd_backfill)
     s = sub.add_parser("categorize"); s.set_defaults(fn=cmd_categorize)
     s = sub.add_parser("accounts"); s.set_defaults(fn=cmd_accounts)
+    s = sub.add_parser("web"); s.set_defaults(fn=cmd_web)
     for name, fn in (("report", cmd_report), ("run", cmd_run)):
         s = sub.add_parser(name); s.add_argument("--email", action="store_true")
         s.add_argument("--quiet", action="store_true"); s.set_defaults(fn=fn)
